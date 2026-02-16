@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Dark Green + Gold theme */
+  --brand-bg: #061b12;          /* deep green-black */
+  --brand-surface: #0b2a1d;     /* dark green surface */
+  --brand-card: #0f3324;        /* slightly lighter green */
+  --brand-border: rgba(255, 255, 255, 0.10);
+  --brand-gold: #d4af37;        /* luxury gold */
+  --brand-gold-2: #f2d27a;      /* lighter gold for hover */
+  --brand-muted: rgba(255,255,255,0.72);
+}
+
+html, body {
+  height: 100%;
+}
+
+.bg-brand-bg { background: var(--brand-bg); }
+.text-brand-muted { color: var(--brand-muted); }
