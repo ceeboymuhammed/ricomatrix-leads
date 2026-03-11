@@ -1,93 +1,146 @@
 "use client";
 
 import { useState } from "react";
-import { LeadForm } from "@/components/LeadForm";
-import { VideoPlaceholder } from "@/components/VideoPlaceholder";
+import { createClient } from "@supabase/supabase-js";
 
-const WHATSAPP_NUMBER = "2348113375026";
-const YOUTUBE_LINK = "https://youtu.be/AhtrIrgebM0";
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-function buildShareUrl(path: string) {
-  if (typeof window === "undefined") return path;
-  return `${window.location.origin}${path}`;
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error("Missing Supabase environment variables.");
 }
 
-export default function TrainingLeadClient() {
-  const [submitted, setSubmitted] = useState(false);
-  const [copied, setCopied] = useState(false);
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-  async function copyLink() {
-    const url = buildShareUrl("/training");
+export default function TrainingLeadClient() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+
+    if (!formData.name.trim() || !formData.email.trim()) {
+      setError("Please enter your name and email.");
+      return;
+    }
+
+    setLoading(true);
+
     try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      // ignore
+      const payload = {
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim() || null,
+        source: "new-economy-roadmap",
+      };
+
+      const { error: insertError } = await supabase
+        .from("leads")
+        .insert([payload]);
+
+      if (insertError) {
+        throw insertError;
+      }
+
+      const message = `Hi! I just came from the New Economy Roadmap page. I'm interested in learning how to leverage digital assets and automated systems. My name is: ${formData.name.trim()}`;
+      const whatsappLink = `https://wa.me/2348146479700?text=${encodeURIComponent(message)}`;
+
+      window.location.href = whatsappLink;
+    } catch (err: any) {
+      console.error("Lead submission error:", err);
+      setError(err?.message || "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
-  const shareUrl = typeof window !== "undefined" ? buildShareUrl("/training") : "/training";
-  const waConsultantLink = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(
-    "Hi, I just requested the free training. Please guide me on the next steps."
-  )}`;
-  const waShareLink = `https://wa.me/?text=${encodeURIComponent(`Here’s the free training page: ${shareUrl}`)}`;
-
   return (
-    <div className="space-y-4">
-      <LeadForm
-        source="training"
-        title="Get Free Access"
-        emailMicrocopy="Your access link will be delivered by email. No spam."
-        phoneMicrocopy="(Optional) Add WhatsApp number so we can support you faster."
-        buttonText="Send Me The Training"
-        afterButtonMicrocopy="Takes less than 10 seconds."
-        privacyLine="We respect your privacy and never sell your data."
-        onSuccess={() => setSubmitted(true)}
-      />
+    <div className="mx-auto w-full max-w-xl rounded-2xl border border-brand-border bg-brand-surface p-6 text-white shadow-soft">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold">Get Started</h1>
+        <p className="mt-2 text-sm text-brand-muted">
+          Enter your details below and continue on WhatsApp.
+        </p>
+      </div>
 
-      {submitted ? (
-        <div className="rounded-xl2 border border-brand-border bg-brand-surface p-5 text-white shadow-soft">
-          <h2 className="text-xl font-semibold">You’re In — Watch This Before You Go</h2>
-
-          <div className="mt-4">
-            <VideoPlaceholder title="Training Video" youtubeUrl={YOUTUBE_LINK} />
-          </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-            <a
-              href={waConsultantLink}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center rounded-xl bg-brand-gold px-4 py-3 text-base font-semibold text-black transition hover:bg-brand-gold2"
-            >
-              Chat with a Consultant on WhatsApp
-            </a>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-1">
-              <button
-                onClick={copyLink}
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-brand-card px-4 py-3 text-base font-semibold text-white transition hover:bg-white/10"
-              >
-                {copied ? "Link Copied ✓" : "Share this Training"}
-              </button>
-
-              <a
-                href={waShareLink}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-xl border border-white/15 bg-brand-card px-4 py-3 text-base font-semibold text-white transition hover:bg-white/10"
-              >
-                Share on WhatsApp
-              </a>
-            </div>
-          </div>
-
-          <p className="mt-4 text-xs text-brand-muted">
-            No spam / we don’t sell your data.
-          </p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label htmlFor="name" className="mb-2 block text-sm font-medium">
+            Full Name
+          </label>
+          <input
+            id="name"
+            name="name"
+            type="text"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Enter your full name"
+            className="w-full rounded-xl border border-white/15 bg-brand-card px-4 py-3 text-white placeholder:text-brand-muted outline-none transition focus:border-brand-gold"
+            required
+          />
         </div>
-      ) : null}
+
+        <div>
+          <label htmlFor="email" className="mb-2 block text-sm font-medium">
+            Email Address
+          </label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Enter your email address"
+            className="w-full rounded-xl border border-white/15 bg-brand-card px-4 py-3 text-white placeholder:text-brand-muted outline-none transition focus:border-brand-gold"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phone" className="mb-2 block text-sm font-medium">
+            WhatsApp Number <span className="text-brand-muted">(Optional)</span>
+          </label>
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={handleChange}
+            placeholder="Enter your WhatsApp number"
+            className="w-full rounded-xl border border-white/15 bg-brand-card px-4 py-3 text-white placeholder:text-brand-muted outline-none transition focus:border-brand-gold"
+          />
+        </div>
+
+        {error ? (
+          <p className="text-sm text-red-400">{error}</p>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex w-full items-center justify-center rounded-xl bg-brand-gold px-4 py-3 text-base font-semibold text-black transition hover:bg-brand-gold2 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {loading ? "Submitting..." : "SEND ME THE DETAILS ON WHATSAPP"}
+        </button>
+
+        <p className="text-xs text-brand-muted">
+          We respect your privacy and never sell your data.
+        </p>
+      </form>
     </div>
   );
 }
