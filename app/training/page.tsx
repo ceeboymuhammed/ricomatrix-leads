@@ -6,12 +6,11 @@ export default function TrainingPage() {
     <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-start">
       <HeroSection
         headline="Master the Shift: The New Digital Economy Roadmap is Here"
-        subheadline="Stop trading time for money. Learn the 3-step system to leverage digital assets and scalable networking for recurring growth."
+        subheadline="Free 20-minute training: How subscription-based models can create recurring online income"
         bullets={[
-          "Why most online income models collapse after initial hype",
-          "The difference between one-time commissions and recurring revenue",
-          "How subscription-based systems create compounding growth",
-          "What to look for before positioning early in any platform",
+          "For Nigerians exploring affiliate and network marketing models",
+          "Learn the difference between one-time commissions and recurring revenue",
+          "See the framework first, then decide whether to continue",
         ]}
       />
 
